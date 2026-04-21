@@ -42,7 +42,7 @@ def initialize_database():
             )
         """)
 
-        # Create memory_alerts table (for anomaly detection)
+        # Create memory_alerts table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS memory_alerts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -55,7 +55,7 @@ def initialize_database():
             )
         """)
 
-        # Create model_metrics table (for ML tracking)
+        # Create model_metrics table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS model_metrics (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -69,7 +69,7 @@ def initialize_database():
             )
         """)
 
-        # Create process_snapshots table (top memory-consuming processes)
+        # Create process_snapshots table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS process_snapshots (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -119,7 +119,6 @@ def save_memory_sample(current_used, available, percent, predicted, decision):
         conn = get_connection()
         if not conn:
             return None
-
         cursor = conn.cursor()
         query = """
             INSERT INTO memory_samples 
@@ -132,24 +131,18 @@ def save_memory_sample(current_used, available, percent, predicted, decision):
         cursor.close()
         conn.close()
         return sample_id
-
     except Error as e:
         print(f"Error saving memory sample: {e}")
         return None
 
-
 def save_process_snapshot(sample_id, processes):
-    """Save top memory-consuming processes linked to a memory sample.
-
-    processes: list of dicts with keys pid, name, memory_mb, memory_percent, rank
-    """
+    """Save top memory-consuming processes linked to a memory sample."""
     if not processes:
         return False
     try:
         conn = get_connection()
         if not conn:
             return False
-
         cursor = conn.cursor()
         query = """
             INSERT INTO process_snapshots
@@ -165,11 +158,9 @@ def save_process_snapshot(sample_id, processes):
         cursor.close()
         conn.close()
         return True
-
     except Error as e:
         print(f"Error saving process snapshot: {e}")
         return False
-
 
 def get_top_processes(limit=5):
     """Retrieve the most recent process snapshot."""
@@ -177,7 +168,6 @@ def get_top_processes(limit=5):
         conn = get_connection()
         if not conn:
             return []
-
         cursor = conn.cursor(dictionary=True)
         query = """
             SELECT ps.*
@@ -193,7 +183,6 @@ def get_top_processes(limit=5):
         cursor.close()
         conn.close()
         return results
-
     except Error as e:
         print(f"Error retrieving top processes: {e}")
         return []
@@ -204,7 +193,6 @@ def get_memory_history(limit=100):
         conn = get_connection()
         if not conn:
             return []
-
         cursor = conn.cursor(dictionary=True)
         query = f"""
             SELECT * FROM memory_samples 
@@ -216,7 +204,6 @@ def get_memory_history(limit=100):
         cursor.close()
         conn.close()
         return results
-
     except Error as e:
         print(f"Error retrieving memory history: {e}")
         return []
@@ -227,7 +214,6 @@ def get_memory_stats(hours=1):
         conn = get_connection()
         if not conn:
             return {}
-
         cursor = conn.cursor(dictionary=True)
         query = f"""
             SELECT 
@@ -245,7 +231,6 @@ def get_memory_stats(hours=1):
         cursor.close()
         conn.close()
         return result if result else {}
-
     except Error as e:
         print(f"Error getting memory stats: {e}")
         return {}
@@ -256,7 +241,6 @@ def save_alert(alert_type, message, memory_mb=None, severity="INFO"):
         conn = get_connection()
         if not conn:
             return False
-
         cursor = conn.cursor()
         query = """
             INSERT INTO memory_alerts 
@@ -268,7 +252,6 @@ def save_alert(alert_type, message, memory_mb=None, severity="INFO"):
         cursor.close()
         conn.close()
         return True
-
     except Error as e:
         print(f"Error saving alert: {e}")
         return False
@@ -279,7 +262,6 @@ def save_model_metrics(model_name, accuracy, mse, rmse, training_samples):
         conn = get_connection()
         if not conn:
             return False
-
         cursor = conn.cursor()
         query = """
             INSERT INTO model_metrics 
@@ -291,7 +273,6 @@ def save_model_metrics(model_name, accuracy, mse, rmse, training_samples):
         cursor.close()
         conn.close()
         return True
-
     except Error as e:
         print(f"Error saving model metrics: {e}")
         return False
@@ -302,7 +283,6 @@ def get_training_data(limit=500):
         conn = get_connection()
         if not conn:
             return []
-
         cursor = conn.cursor(dictionary=True)
         query = f"""
             SELECT 
@@ -319,7 +299,6 @@ def get_training_data(limit=500):
         cursor.close()
         conn.close()
         return results
-
     except Error as e:
         print(f"Error getting training data: {e}")
         return []
