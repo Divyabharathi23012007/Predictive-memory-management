@@ -1,30 +1,52 @@
 import os
 import sys
 
-# Fix import path for Vercel — ensure backend/ folder is on the path
-sys.path.insert(0, os.path.dirname(__file__))
+# Vercel runs from /var/task — add backend/ folder explicitly to path
+backend_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+parent_dir = os.path.dirname(backend_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import psutil
-from model import predict_memory
-from database import (
-    initialize_database,
-    save_memory_sample,
-    get_memory_history,
-    get_memory_stats,
-    save_alert,
-    get_training_data,
-    save_process_snapshot,
-    get_top_processes,
-)
+
+try:
+    from model import predict_memory
+except ImportError:
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "backend"))
+    from model import predict_memory
+
+try:
+    from database import (
+        initialize_database,
+        save_memory_sample,
+        get_memory_history,
+        get_memory_stats,
+        save_alert,
+        get_training_data,
+        save_process_snapshot,
+        get_top_processes,
+    )
+except ImportError:
+    from backend.database import (
+        initialize_database,
+        save_memory_sample,
+        get_memory_history,
+        get_memory_stats,
+        save_alert,
+        get_training_data,
+        save_process_snapshot,
+        get_top_processes,
+    )
 
 app = FastAPI()
 
-# Initialize database on startup
 initialize_database()
 
-# Allow frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -39,11 +61,9 @@ def root():
 @app.get("/api/scan")
 def scan_system():
     mem = psutil.virtual_memory()
-
     current_used = mem.used / (1024 ** 2)
     available = mem.available / (1024 ** 2)
     percent = mem.percent
-
     predicted = predict_memory(current_used, percent)
 
     if percent < 60:
@@ -69,10 +89,8 @@ def scan_system():
                 })
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-
         proc_list.sort(key=lambda x: x["memory_mb"], reverse=True)
         top_procs = [dict(p, rank=i + 1) for i, p in enumerate(proc_list[:5])]
-
         if sample_id:
             save_process_snapshot(sample_id, top_procs)
     except Exception as e:
