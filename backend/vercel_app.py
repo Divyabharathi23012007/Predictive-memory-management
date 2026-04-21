@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Fix import path for Vercel — ensure backend/ folder is on the path
+sys.path.insert(0, os.path.dirname(__file__))
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import psutil
@@ -35,13 +40,12 @@ def root():
 def scan_system():
     mem = psutil.virtual_memory()
 
-    current_used = mem.used / (1024 ** 2)      # MB
-    available = mem.available / (1024 ** 2)    # MB
+    current_used = mem.used / (1024 ** 2)
+    available = mem.available / (1024 ** 2)
     percent = mem.percent
 
     predicted = predict_memory(current_used, percent)
 
-    # OS-style decision logic
     if percent < 60:
         decision = "Memory Stable"
     elif percent < 80:
@@ -49,10 +53,8 @@ def scan_system():
     else:
         decision = "Allocate More Memory"
 
-    # Save to database — capture returned sample id
     sample_id = save_memory_sample(current_used, available, percent, predicted, decision)
 
-    # Collect top 5 processes by memory usage
     top_procs = []
     try:
         proc_list = []
@@ -76,7 +78,6 @@ def scan_system():
     except Exception as e:
         print(f"Error collecting process data: {e}")
 
-    # Trigger alert if memory usage is high
     if percent > 85:
         save_alert("HIGH_MEMORY", f"Memory usage at {percent}%", current_used, "CRITICAL")
 
@@ -91,39 +92,23 @@ def scan_system():
 
 @app.get("/api/processes")
 def get_processes():
-    """Get the top memory-consuming processes from the latest snapshot"""
     procs = get_top_processes(5)
-    return {
-        "count": len(procs),
-        "processes": procs,
-    }
+    return {"count": len(procs), "processes": procs}
 
 @app.get("/api/history")
 def get_history(limit: int = 100):
-    """Get historical memory readings"""
     history = get_memory_history(limit)
-    return {
-        "count": len(history),
-        "data": history
-    }
+    return {"count": len(history), "data": history}
 
 @app.get("/api/stats")
 def get_stats(hours: int = 1):
-    """Get memory statistics"""
     stats = get_memory_stats(hours)
-    return {
-        "hours": hours,
-        "statistics": stats
-    }
+    return {"hours": hours, "statistics": stats}
 
 @app.get("/api/training-data")
 def get_training():
-    """Get data for ML model training"""
     data = get_training_data(500)
-    return {
-        "samples": len(data),
-        "data": data
-    }
+    return {"samples": len(data), "data": data}
 
 # For Vercel serverless deployment
 handler = app
