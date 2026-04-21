@@ -31,7 +31,6 @@
       overflow-x: hidden;
     }
 
-    /* Animated background grid */
     body::before {
       content: '';
       position: fixed;
@@ -44,7 +43,6 @@
       z-index: 0;
     }
 
-    /* Ambient blobs */
     body::after {
       content: '';
       position: fixed;
@@ -74,7 +72,6 @@
       padding: 32px 24px;
     }
 
-    /* ── Header ── */
     header {
       display: flex;
       align-items: center;
@@ -82,11 +79,7 @@
       margin-bottom: 40px;
     }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
 
     .logo-icon {
       width: 36px; height: 36px;
@@ -94,8 +87,6 @@
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px;
-      -webkit-background-clip: text;
-      background-clip: text;
     }
 
     .logo-text {
@@ -107,8 +98,8 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      -webkit-text-fill-color: transparent;
-    } 
+    }
+
     .logo-sub {
       font-size: 11px;
       color: var(--muted);
@@ -142,7 +133,6 @@
       50%       { opacity: 0.4; transform: scale(0.7); }
     }
 
-    /* ── Stat Cards Row ── */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -205,12 +195,8 @@
     .stat-card.c3 .stat-value { color: var(--accent3); }
     .stat-card.c4 .stat-value { color: var(--accent4); }
 
-    .stat-unit {
-      font-size: 13px;
-      color: var(--muted);
-    }
+    .stat-unit { font-size: 13px; color: var(--muted); }
 
-    /* ── Progress bar inside card ── */
     .mini-bar-track {
       margin-top: 14px;
       height: 4px;
@@ -230,14 +216,12 @@
     .c3 .mini-bar-fill { background: var(--accent3); }
     .c4 .mini-bar-fill { background: var(--accent4); }
 
-    /* ── Bottom two-column layout ── */
     .bottom-grid {
       display: grid;
       grid-template-columns: 1fr 320px;
       gap: 16px;
     }
 
-    /* ── Chart Panel ── */
     .chart-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -261,10 +245,7 @@
       color: var(--muted);
     }
 
-    .legend {
-      display: flex;
-      gap: 16px;
-    }
+    .legend { display: flex; gap: 16px; }
 
     .legend-item {
       display: flex;
@@ -274,10 +255,7 @@
       color: var(--muted);
     }
 
-    .legend-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
 
     canvas#memoryChart {
       display: block;
@@ -285,7 +263,6 @@
       height: 260px !important;
     }
 
-    /* ── Decision Panel ── */
     .decision-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -342,7 +319,6 @@
       50%       { box-shadow: 0 0 18px rgba(255,79,107,0.35); }
     }
 
-    /* ── Usage ring ── */
     .ring-wrap {
       display: flex;
       flex-direction: column;
@@ -363,7 +339,7 @@
       stroke-width: 10;
       stroke-linecap: round;
       stroke: var(--accent1);
-      stroke-dasharray: 283; /* 2π×45 */
+      stroke-dasharray: 283;
       stroke-dashoffset: 283;
       transition: stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
                   stroke 0.4s ease;
@@ -378,10 +354,7 @@
       flex-direction: column;
     }
 
-    .ring-container {
-      position: relative;
-      width: 120px; height: 120px;
-    }
+    .ring-container { position: relative; width: 120px; height: 120px; }
 
     .ring-pct {
       font-family: 'Space Mono', monospace;
@@ -397,7 +370,6 @@
       text-transform: uppercase;
     }
 
-    /* ── History log ── */
     .log-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -454,7 +426,6 @@
     .log-tag.warn     { background: rgba(255,199,0,0.08); color: #ffc700; }
     .log-tag.critical { background: rgba(255,79,107,0.1); color: var(--accent3); }
 
-    /* ── Process Table ── */
     .proc-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -481,19 +452,13 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .proc-table tbody tr {
-      transition: background 0.2s;
-    }
-
-    .proc-table tbody tr:hover {
-      background: rgba(14,165,233,0.05);
-    }
+    .proc-table tbody tr { transition: background 0.2s; }
+    .proc-table tbody tr:hover { background: rgba(14,165,233,0.05); }
 
     .proc-table tbody td {
       padding: 10px 10px;
       border-bottom: 1px solid rgba(226,232,240,0.6);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
     }
 
     .proc-table tbody td:first-child {
@@ -503,22 +468,9 @@
       width: 28px;
     }
 
-    .proc-pid {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      color: var(--muted);
-    }
-
-    .proc-name {
-      font-weight: 500;
-    }
-
-    .proc-mb {
-      font-family: 'Space Mono', monospace;
-      color: var(--accent1);
-      font-size: 12px;
-    }
-
+    .proc-pid { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--muted); }
+    .proc-name { font-weight: 500; }
+    .proc-mb { font-family: 'Space Mono', monospace; color: var(--accent1); font-size: 12px; }
     .proc-bar-cell { width: 140px; }
 
     .proc-bar-track {
@@ -535,13 +487,11 @@
       transition: width 0.6s ease;
     }
 
-    /* ── Animation ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(18px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── Responsive ── */
     @media (max-width: 900px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .bottom-grid { grid-template-columns: 1fr; }
@@ -570,7 +520,6 @@
     </div>
   </header>
 
-  <!-- Stat Cards -->
   <div class="stats-grid">
     <div class="stat-card c1">
       <div class="stat-label">Current Usage</div>
@@ -594,9 +543,7 @@
     </div>
   </div>
 
-  <!-- Chart + Decision -->
   <div class="bottom-grid">
-
     <div class="chart-panel">
       <div class="panel-header">
         <div class="panel-title">Memory Timeline</div>
@@ -613,7 +560,6 @@
         <div class="decision-label">OS Decision</div>
         <div class="decision-badge ok" id="decision-badge">—</div>
       </div>
-
       <div class="ring-wrap">
         <div class="decision-label" style="margin-bottom:0">Memory Load</div>
         <div class="ring-container">
@@ -630,13 +576,11 @@
     </div>
   </div>
 
-  <!-- Event Log -->
   <div class="log-panel">
     <div class="panel-title">Event Log</div>
     <div class="log-list" id="log-list"></div>
   </div>
 
-  <!-- Top Processes -->
   <div class="proc-panel">
     <div class="panel-header">
       <div class="panel-title">Top Processes by Memory</div>
@@ -758,37 +702,33 @@
   }
 
   function updateDashboard() {
-    fetch("/scan")
+    fetch("/api/scan")
       .then(res => res.json())
       .then(data => {
-        const cur  = data.current_memory_mb;
+        const cur   = data.current_memory_mb;
         const avail = data.available_memory_mb;
-        const pct  = parseFloat(data.memory_usage_percent);
-        const pred = data.predicted_memory_mb;
-        const dec  = data.os_decision;
+        const pct   = parseFloat(data.memory_usage_percent);
+        const pred  = data.predicted_memory_mb;
+        const dec   = data.os_decision;
 
         document.getElementById("current").innerText   = cur;
         document.getElementById("available").innerText = avail;
         document.getElementById("percent").innerText   = pct;
         document.getElementById("predicted").innerText = pred;
 
-        // bars
         const total = cur + avail;
         document.getElementById("bar-current").style.width   = Math.min((cur / total) * 100, 100) + "%";
         document.getElementById("bar-available").style.width = Math.min((avail / total) * 100, 100) + "%";
         document.getElementById("bar-percent").style.width   = Math.min(pct, 100) + "%";
         document.getElementById("bar-predicted").style.width = Math.min((pred / total) * 100, 100) + "%";
 
-        // decision badge
         const badge = document.getElementById("decision-badge");
         const cls   = decisionClass(dec);
         badge.className = `decision-badge ${cls}`;
         badge.textContent = dec || "—";
 
-        // ring
         setRing(Math.round(pct));
 
-        // chart
         const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
         labels.push(time);
         currentData.push(cur);
@@ -796,28 +736,26 @@
         if (labels.length > 12) { labels.shift(); currentData.shift(); predictedData.shift(); }
         chart.update();
 
-        // processes table
-      const procs = data.top_processes || [];
-      const tbody = document.getElementById("proc-tbody");
-      if (procs.length > 0) {
-        const maxMb = procs[0].memory_mb || 1;
-        tbody.innerHTML = procs.map(p => `
-          <tr>
-            <td>${p.rank}</td>
-            <td class="proc-name">${p.name}</td>
-            <td class="proc-pid">${p.pid}</td>
-            <td class="proc-mb">${p.memory_mb.toFixed(1)}</td>
-            <td class="proc-pid">${p.memory_percent.toFixed(2)}%</td>
-            <td class="proc-bar-cell">
-              <div class="proc-bar-track">
-                <div class="proc-bar-fill" style="width:${Math.min((p.memory_mb/maxMb)*100,100)}%"></div>
-              </div>
-            </td>
-          </tr>
-        `).join("");
-      }
+        const procs = data.top_processes || [];
+        const tbody = document.getElementById("proc-tbody");
+        if (procs.length > 0) {
+          const maxMb = procs[0].memory_mb || 1;
+          tbody.innerHTML = procs.map(p => `
+            <tr>
+              <td>${p.rank}</td>
+              <td class="proc-name">${p.name}</td>
+              <td class="proc-pid">${p.pid}</td>
+              <td class="proc-mb">${p.memory_mb.toFixed(1)}</td>
+              <td class="proc-pid">${p.memory_percent.toFixed(2)}%</td>
+              <td class="proc-bar-cell">
+                <div class="proc-bar-track">
+                  <div class="proc-bar-fill" style="width:${Math.min((p.memory_mb/maxMb)*100,100)}%"></div>
+                </div>
+              </td>
+            </tr>
+          `).join("");
+        }
 
-      // log
         addLog(`Memory at ${pct}% — decision: ${dec}`, cls);
       })
       .catch(() => {
