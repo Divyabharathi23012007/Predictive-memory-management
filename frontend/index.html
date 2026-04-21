@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MemOS — Predictive Memory Management</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:       #ffffff;
+      --surface:  #f8fafc;
+      --border:   #e2e8f0;
+      --accent1:  #0ea5e9;
+      --accent2:  #7c3aed;
+      --accent3:  #ef4444;
+      --accent4:  #22c55e;
+      --text:     #1e293b;
+      --muted:    #64748b;
+      --glow1: 0 0 20px rgba(14,165,233,0.15);
+      --glow2: 0 0 20px rgba(124,58,237,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(14,165,233,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(14,165,233,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient blobs */
+    body::after {
+      content: '';
+      position: fixed;
+      width: 600px; height: 600px;
+      top: -200px; right: -200px;
+      background: radial-gradient(circle, rgba(124,58,237,0.06) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .blob2 {
+      position: fixed;
+      width: 500px; height: 500px;
+      bottom: -150px; left: -100px;
+      background: radial-gradient(circle, rgba(14,165,233,0.04) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .logo-text {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    } 
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(57,255,151,0.08);
+      border: 1px solid rgba(57,255,151,0.2);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: var(--accent4);
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 1px;
+    }
+
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--accent4);
+      border-radius: 50%;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ── Stat Cards Row ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent1);
+      transform: translateY(-2px);
+      box-shadow: var(--glow1);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .stat-card.c1::before { background: var(--accent1); }
+    .stat-card.c2::before { background: var(--accent2); }
+    .stat-card.c3::before { background: var(--accent3); }
+    .stat-card.c4::before { background: var(--accent4); }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.10s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.20s; }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card.c1 .stat-value { color: var(--accent1); }
+    .stat-card.c2 .stat-value { color: var(--accent2); }
+    .stat-card.c3 .stat-value { color: var(--accent3); }
+    .stat-card.c4 .stat-value { color: var(--accent4); }
+
+    .stat-unit {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Progress bar inside card ── */
+    .mini-bar-track {
+      margin-top: 14px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .c1 .mini-bar-fill { background: var(--accent1); }
+    .c2 .mini-bar-fill { background: var(--accent2); }
+    .c3 .mini-bar-fill { background: var(--accent3); }
+    .c4 .mini-bar-fill { background: var(--accent4); }
+
+    /* ── Bottom two-column layout ── */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+    }
+
+    /* ── Chart Panel ── */
+    .chart-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      animation: fadeUp 0.5s ease 0.25s both;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+    }
+
+    canvas#memoryChart {
+      display: block;
+      width: 100% !important;
+      height: 260px !important;
+    }
+
+    /* ── Decision Panel ── */
+    .decision-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeUp 0.5s ease 0.30s both;
+    }
+
+    .decision-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+    }
+
+    .decision-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: all 0.4s ease;
+    }
+
+    .decision-badge.ok {
+      background: rgba(57,255,151,0.1);
+      border: 1px solid rgba(57,255,151,0.3);
+      color: var(--accent4);
+    }
+
+    .decision-badge.warn {
+      background: rgba(255,199,0,0.08);
+      border: 1px solid rgba(255,199,0,0.25);
+      color: #ffc700;
+    }
+
+    .decision-badge.critical {
+      background: rgba(255,79,107,0.1);
+      border: 1px solid rgba(255,79,107,0.3);
+      color: var(--accent3);
+      animation: flickerRed 1.2s ease infinite;
+    }
+
+    @keyframes flickerRed {
+      0%, 100% { box-shadow: 0 0 0 rgba(255,79,107,0); }
+      50%       { box-shadow: 0 0 18px rgba(255,79,107,0.35); }
+    }
+
+    /* ── Usage ring ── */
+    .ring-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ring-svg { transform: rotate(-90deg); }
+
+    .ring-track {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 10;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke: var(--accent1);
+      stroke-dasharray: 283; /* 2π×45 */
+      stroke-dashoffset: 283;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  stroke 0.4s ease;
+    }
+
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 120px; height: 120px;
+    }
+
+    .ring-pct {
+      font-family: 'Space Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .ring-sub {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* ── History log ── */
+    .log-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-top: 16px;
+      animation: fadeUp 0.5s ease 0.35s both;
+    }
+
+    .log-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .log-list::-webkit-scrollbar { width: 4px; }
+    .log-list::-webkit-scrollbar-track { background: transparent; }
+    .log-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    .log-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      animation: fadeUp 0.25s ease both;
+    }
+
+    .log-time {
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      flex-shrink: 0;
+      font-size: 10px;
+    }
+
+    .log-msg { color: var(--text); }
+
+    .log-tag {
+      margin-left: auto;
+      flex-shrink: 0;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 5px;
+    }
+
+    .log-tag.ok       { background: rgba(57,255,151,0.1); color: var(--accent4); }
+    .log-tag.warn     { background: rgba(255,199,0,0.08); color: #ffc700; }
+    .log-tag.critical { background: rgba(255,79,107,0.1); color: var(--accent3); }
+
+    /* ── Process Table ── */
+    .proc-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-top: 16px;
+      animation: fadeUp 0.5s ease 0.40s both;
+    }
+
+    .proc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 13px;
+    }
+
+    .proc-table thead th {
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      padding: 0 10px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .proc-table tbody tr {
+      transition: background 0.2s;
+    }
+
+    .proc-table tbody tr:hover {
+      background: rgba(14,165,233,0.05);
+    }
+
+    .proc-table tbody td {
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(226,232,240,0.6);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .proc-table tbody td:first-child {
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      width: 28px;
+    }
+
+    .proc-pid {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .proc-name {
+      font-weight: 500;
+    }
+
+    .proc-mb {
+      font-family: 'Space Mono', monospace;
+      color: var(--accent1);
+      font-size: 12px;
+    }
+
+    .proc-bar-cell { width: 140px; }
+
+    .proc-bar-track {
+      height: 5px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .proc-bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      transition: width 0.6s ease;
+    }
+
+    /* ── Animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .bottom-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="blob2"></div>
+<div class="wrapper">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">⬡</div>
+      <div>
+        <div class="logo-text">MemOS</div>
+        <div class="logo-sub">Predictive Memory Dashboard</div>
+      </div>
+    </div>
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      LIVE
+    </div>
+  </header>
+
+  <!-- Stat Cards -->
+  <div class="stats-grid">
+    <div class="stat-card c1">
+      <div class="stat-label">Current Usage</div>
+      <div class="stat-value"><span id="current">—</span> <span class="stat-unit">MB</span></div>
+      <div class="mini-bar-track"><div class="mini-bar-fill" id="bar-current" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card c2">
+      <div class="stat-label">Available</div>
+      <div class="stat-value"><span id="available">—</span> <span class="stat-unit">MB</span></div>
+      <div class="mini-bar-track"><div class="mini-bar-fill" id="bar-available" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card c3">
+      <div class="stat-label">Predicted Next</div>
+      <div class="stat-value"><span id="predicted">—</span> <span class="stat-unit">MB</span></div>
+      <div class="mini-bar-track"><div class="mini-bar-fill" id="bar-predicted" style="width:100%"></div></div>
+    </div>
+    <div class="stat-card c4">
+      <div class="stat-label">Usage %</div>
+      <div class="stat-value"><span id="percent">—</span> <span class="stat-unit">%</span></div>
+      <div class="mini-bar-track"><div class="mini-bar-fill" id="bar-percent" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Chart + Decision -->
+  <div class="bottom-grid">
+
+    <div class="chart-panel">
+      <div class="panel-header">
+        <div class="panel-title">Memory Timeline</div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent1)"></div>Current</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Predicted</div>
+        </div>
+      </div>
+      <canvas id="memoryChart"></canvas>
+    </div>
+
+    <div class="decision-panel">
+      <div>
+        <div class="decision-label">OS Decision</div>
+        <div class="decision-badge ok" id="decision-badge">—</div>
+      </div>
+
+      <div class="ring-wrap">
+        <div class="decision-label" style="margin-bottom:0">Memory Load</div>
+        <div class="ring-container">
+          <svg class="ring-svg" width="120" height="120" viewBox="0 0 100 100">
+            <circle class="ring-track" cx="50" cy="50" r="45"/>
+            <circle class="ring-fill" id="ring-fill" cx="50" cy="50" r="45"/>
+          </svg>
+          <div class="ring-center">
+            <div class="ring-pct" id="ring-pct">0%</div>
+            <div class="ring-sub">Used</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event Log -->
+  <div class="log-panel">
+    <div class="panel-title">Event Log</div>
+    <div class="log-list" id="log-list"></div>
+  </div>
+
+  <!-- Top Processes -->
+  <div class="proc-panel">
+    <div class="panel-header">
+      <div class="panel-title">Top Processes by Memory</div>
+      <div class="legend-item" style="font-size:11px;color:var(--muted)">Updated every 3s</div>
+    </div>
+    <table class="proc-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Process Name</th>
+          <th>PID</th>
+          <th>Memory (MB)</th>
+          <th>% of RAM</th>
+          <th class="proc-bar-cell">Usage</th>
+        </tr>
+      </thead>
+      <tbody id="proc-tbody">
+        <tr><td colspan="6" style="color:var(--muted);text-align:center;padding:20px;font-size:12px;">Waiting for data…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  const labels = [], currentData = [], predictedData = [];
+
+  const ctx = document.getElementById("memoryChart").getContext("2d");
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Current (MB)",
+          data: currentData,
+          borderColor: "#0ea5e9",
+          backgroundColor: "rgba(14,165,233,0.08)",
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: "#0ea5e9",
+          fill: true,
+          tension: 0.4
+        },
+        {
+          label: "Predicted (MB)",
+          data: predictedData,
+          borderColor: "#7c3aed",
+          backgroundColor: "rgba(124,58,237,0.08)",
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: "#7c3aed",
+          borderDash: [5, 4],
+          fill: true,
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#f8fafc",
+          borderColor: "#e2e8f0",
+          borderWidth: 1,
+          titleColor: "#1e293b",
+          bodyColor: "#64748b",
+          padding: 10,
+          cornerRadius: 8,
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#64748b", font: { family: "'Space Mono', monospace", size: 10 } },
+          grid: { color: "rgba(226,232,240,0.5)" }
+        },
+        y: {
+          ticks: { color: "#64748b", font: { family: "'Space Mono', monospace", size: 10 } },
+          grid: { color: "rgba(226,232,240,0.5)" }
+        }
+      }
+    }
+  });
+
+  function decisionClass(text) {
+    if (!text || text === "—") return "ok";
+    const t = text.toLowerCase();
+    if (t.includes("critical") || t.includes("swap") || t.includes("kill")) return "critical";
+    if (t.includes("warn") || t.includes("prefetch") || t.includes("compress")) return "warn";
+    return "ok";
+  }
+
+  function setRing(pct) {
+    const fill = document.getElementById("ring-fill");
+    const circumference = 283;
+    const offset = circumference - (pct / 100) * circumference;
+    fill.style.strokeDashoffset = offset;
+    if (pct >= 85) { fill.style.stroke = "#ff4f6b"; }
+    else if (pct >= 60) { fill.style.stroke = "#ffc700"; }
+    else { fill.style.stroke = "#00e5ff"; }
+    document.getElementById("ring-pct").innerText = pct + "%";
+  }
+
+  function addLog(msg, tag) {
+    const list = document.getElementById("log-list");
+    const row = document.createElement("div");
+    row.className = "log-row";
+    const t = new Date().toLocaleTimeString();
+    row.innerHTML = `
+      <span class="log-time">${t}</span>
+      <span class="log-msg">${msg}</span>
+      <span class="log-tag ${tag}">${tag.toUpperCase()}</span>
+    `;
+    list.prepend(row);
+    while (list.children.length > 8) list.removeChild(list.lastChild);
+  }
+
+  function updateDashboard() {
+    fetch("/scan")
+      .then(res => res.json())
+      .then(data => {
+        const cur  = data.current_memory_mb;
+        const avail = data.available_memory_mb;
+        const pct  = parseFloat(data.memory_usage_percent);
+        const pred = data.predicted_memory_mb;
+        const dec  = data.os_decision;
+
+        document.getElementById("current").innerText   = cur;
+        document.getElementById("available").innerText = avail;
+        document.getElementById("percent").innerText   = pct;
+        document.getElementById("predicted").innerText = pred;
+
+        // bars
+        const total = cur + avail;
+        document.getElementById("bar-current").style.width   = Math.min((cur / total) * 100, 100) + "%";
+        document.getElementById("bar-available").style.width = Math.min((avail / total) * 100, 100) + "%";
+        document.getElementById("bar-percent").style.width   = Math.min(pct, 100) + "%";
+        document.getElementById("bar-predicted").style.width = Math.min((pred / total) * 100, 100) + "%";
+
+        // decision badge
+        const badge = document.getElementById("decision-badge");
+        const cls   = decisionClass(dec);
+        badge.className = `decision-badge ${cls}`;
+        badge.textContent = dec || "—";
+
+        // ring
+        setRing(Math.round(pct));
+
+        // chart
+        const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        labels.push(time);
+        currentData.push(cur);
+        predictedData.push(pred);
+        if (labels.length > 12) { labels.shift(); currentData.shift(); predictedData.shift(); }
+        chart.update();
+
+        // processes table
+      const procs = data.top_processes || [];
+      const tbody = document.getElementById("proc-tbody");
+      if (procs.length > 0) {
+        const maxMb = procs[0].memory_mb || 1;
+        tbody.innerHTML = procs.map(p => `
+          <tr>
+            <td>${p.rank}</td>
+            <td class="proc-name">${p.name}</td>
+            <td class="proc-pid">${p.pid}</td>
+            <td class="proc-mb">${p.memory_mb.toFixed(1)}</td>
+            <td class="proc-pid">${p.memory_percent.toFixed(2)}%</td>
+            <td class="proc-bar-cell">
+              <div class="proc-bar-track">
+                <div class="proc-bar-fill" style="width:${Math.min((p.memory_mb/maxMb)*100,100)}%"></div>
+              </div>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      // log
+        addLog(`Memory at ${pct}% — decision: ${dec}`, cls);
+      })
+      .catch(() => {
+        addLog("Backend unreachable — retrying…", "warn");
+      });
+  }
+
+  setInterval(updateDashboard, 3000);
+  updateDashboard();
+</script>
+</body>
+</html>

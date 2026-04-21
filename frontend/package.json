@@ -1,0 +1,17 @@
+{
+  "name": "memoria-frontend",
+  "version": "1.0.0",
+  "description": "MemOS Frontend - Predictive Memory Management Dashboard",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static build complete'",
+    "start": "npx serve . -s . -l 3000"
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  },
+  "devDependencies": {
+    "phaser": "^3.70.0"
+  }
+}
