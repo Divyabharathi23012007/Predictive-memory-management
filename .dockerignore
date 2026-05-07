@@ -1,0 +1,27 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node modules (if we add build process later)
+node_modules/
+
+# Build artifacts (if we add build process later)
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
